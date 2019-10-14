@@ -15,9 +15,12 @@ endif (NOT BISON_FOUND)
 set(CMAKE_CXX_FLAGS " -w -O2 -m32")
 #set(CMAKE_CXX_FLAGS "-g -w -m32")
 
-if (APPLE OR (BISON_VERSION VERSION_GREATER "3.0.0"))
-   add_definitions(-DNWN_BISON_3=1)
-endif (APPLE OR (BISON_VERSION VERSION_GREATER "3.0.0"))
+# this does not seem needed for my opensuse bison 3.0.4. 
+# if you do hit errors on newer bison versions uncomment
+# these lines and run 'cmake .' again. 
+#if (APPLE OR (BISON_VERSION VERSION_GREATER "3.0.0"))
+#   add_definitions(-DNWN_BISON_3=1)
+#endif (APPLE OR (BISON_VERSION VERSION_GREATER "3.0.0"))
 
 add_subdirectory(_MathLib)
 add_subdirectory(_NmcLib)
