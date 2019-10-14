@@ -167,6 +167,9 @@ char *g_apszBadScripts [] =
 	NULL,
 };
 
+static int isDir(const char * pathname);
+static char * getDirSep(const char * pathname);
+
 //
 //MAYBEFIX
 //
@@ -1424,13 +1427,18 @@ const char *pszToReplaceExt, const char *pszReplaceWithExt)
 		// If it is just a path
 		//
 		int nLength = (int) strlen (pszOutFile);
-		if (pszOutFile [nLength - 1] == '\\' || pszOutFile [nLength - 1] == '/')
-		{
+		if (isDir(pszOutFile)) {
+			//if (pszOutFile [nLength - 1] == '\\' || pszOutFile [nLength - 1] == '/')
+			//{
 			//
 			// Start with the input file name
 			//
 			strcpy (szOutName, pszOutFile);
 
+			char * sep = getDirSep(pszOutFile);
+			if (sep != NULL) {
+				strcat (szOutName, sep);
+			}
 			//
 			// Append the base name of the input file name
 			//
@@ -1890,6 +1898,52 @@ bool MatchPattern (const char *pszString, const char *pszPattern)
 	} 
 }
 
+static int isDir(const char * pathname)  {
+
+	if (pathname == NULL) return 0;
+
+#ifdef _WIN32
+	struct _stat buf;
+	int nLength = (int) strlen (pathname);
+	int result = _stat(pathname, &buf);
+	if (result == 0 && pathname [nLength - 1] == '\\') 
+		return 1;
+
+#else
+	struct stat sb;
+	int result = stat(pathname, &sb);
+	if (result == 0  && S_ISDIR(sb.st_mode)) 
+		return 1;
+#endif
+	return 0;
+}
+
+#ifdef _WIN32
+static char * dirsep = "\\";
+#else
+static char * dirsep = "/";
+#endif
+
+
+static char * getDirSep(const char * pathname) {
+
+	if (pathname == NULL) return NULL;
+
+	int nLength = (int) strlen (pathname);
+
+#ifdef _WIN32
+	if (pathname [nLength - 1] != '\\') { 
+		return dirsep;
+	
+	}
+#else
+	if (pathname [nLength - 1] != '/') { 
+		return dirsep;
+	}
+#endif
+	return NULL;
+}
+
 //-----------------------------------------------------------------------------
 //
 // @func The main
@@ -1907,6 +1961,7 @@ int main (int argc, char *argv [])
 	char *pszOutFile = NULL;
 	char *pszNWNDir = NULL;	
 	char *pszIncDir = NULL;
+	char *pszOutDir = NULL;
 	char **papszInFiles = NULL;
 	int nInFileCount = 0;
 	bool bDebug    = false;
@@ -2061,8 +2116,12 @@ int main (int argc, char *argv [])
 						}
 						*/
 						break;
+				        case 'b':
+						++skip;
+						pszOutDir =  argv [i + skip];
+ 						break;
 					default:
-						printf ("Error: Unrecognized option \"%c\"\n", *p);
+						printf ("Error: Unrecognized option \"%c\"\n", c);
 						fError = true;
 						break;
 				}
@@ -2098,6 +2157,20 @@ int main (int argc, char *argv [])
 			papszInFiles [nInFileCount++] = argv [i];
 		}
 #endif
+	}
+
+	if (pszOutDir != NULL) {
+		if (isDir(pszOutDir)) {
+			if (pszOutFile == NULL) {
+				pszOutFile = pszOutDir;
+			} else {
+				printf ("Output dir specified, ignoring extra output argument\n");
+				pszOutFile = pszOutDir;
+			}
+		} else {
+			printf ("Error: Output dir %s, is not a directory.\n", pszOutDir);
+			fError = true;
+		}
 	}
 	if (pszNWNDir == NULL) {
 		if (g_bNWNDir) {
@@ -2141,10 +2214,11 @@ int main (int argc, char *argv [])
 		printf ("  -d - Decompile the script (can't be used with -c)\n");
 		printf ("  -e - Enable non-Bioware extensions\n");
 		printf ("  -g - Don't produce ndb debug file\n");	
-		printf ("  -i - Path to include dir is following non-switch argument\n");
+		printf ("  -i <path> - Path to include dir\n");
+		printf ("  -b <path/> - Path to put output files in (must have trailing path seperator (i.e. / or \\)\n");
 		printf ("  -k - Enable CPP support - only meaningful with -i and using separate directory structure\n");	
 		printf ("  -l - List constant, struct and function symbols and running total\n");
-		printf ("  -n - Enable NWNEE support - only needed with -i. Currently CPP on EE is not supported");
+		printf ("  -n - Enable NWNEE support - only needed with -i. Currently CPP on EE is not supported\n");
 		printf ("  -o - Optimize the compiled source\n");
 		printf ("  -p - Path to NWNDir is following non-switch argument\n");
 		printf ("  -q - Silence most messages\n");
@@ -2177,8 +2251,13 @@ int main (int argc, char *argv [])
 	//
 	// We must be able to open the file
 	//
-	if (!g_bQuiet)
-		printf("NWNNsscompiler initializing with NWNDIR = %s, IncludeDir = %s\n", pszNWNDir, pszIncDir);
+	if (!g_bQuiet) {
+		if (pszOutDir != NULL) {
+			printf("NWNNsscompiler initializing with NWNDIR = %s, IncludeDir = %s, OutputDir = %s\n", pszNWNDir, pszIncDir, pszOutDir);	
+		} else {
+			printf("NWNNsscompiler initializing with NWNDIR = %s, IncludeDir = %s\n", pszNWNDir, pszIncDir);	
+		}
+	}
 	if (!g_sLoader .Initialize (pszNWNDir, pszIncDir))
 	{
 		printf ("Unable to locate or open Neverwinter Nights\n");
@@ -2465,15 +2544,15 @@ int main (int argc, char *argv [])
 
 			if (result != 0) {
 				char szInFile [512];
-                const char *tmp;
+				const char *tmp;
 				strcpy (szInFile, papszInFiles [i]);
-                tmp = NwnBasename(szInFile);
+				tmp = NwnBasename(szInFile);
 				char *p = (char *) strchr (tmp, '.');	
 
-                if (p) {
+				if (p) {
 					*p = '\0';
-                }
-                        strcpy (szInFile, tmp);
+				}
+				strcpy (szInFile, tmp);
 				strcat (szInFile, g_fCompile ? ".nss" : ".ncs");
                         //note that on linux the following returns true/false 
                         //indicating whether any error occurred
@@ -2485,8 +2564,8 @@ int main (int argc, char *argv [])
 				nCount = Wildcard (papszInFiles[i], pszOutFile, bDebug, bReport);
 			if (!nCount)
 			{
-                            if (!g_bQuiet || bReport) printf ("Errors occurred in compiling \"%s\"\n", papszInFiles[i]);
-                            exit (1);
+				if (!g_bQuiet || bReport) printf ("Errors occurred in compiling \"%s\"\n", papszInFiles[i]);
+				exit (1);
 			}
 		}
 	}
