@@ -511,7 +511,7 @@ public:
 				if (m_pData != NULL)
 			//if (m_ulOffset != 0 && m_ulCount != 0) 
 			{
-				CallDestructors (m_pData, m_ulCount);
+				//CallDestructors (m_pData, m_ulCount);
 				free (m_pData);
 				m_pData = NULL;
 			}
