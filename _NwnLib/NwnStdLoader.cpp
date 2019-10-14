@@ -319,7 +319,7 @@ unsigned char *CNwnStdLoader::LoadResource (const char *pszName,
 			(char*)	"."
 		} ;
 		char * eedirs [] = {
-			(char*) "eecpp_data",
+			(char*) "eecpp_scripts",
 			(char*) "base_scripts",
 			(char*)	"."
 		} ;	
@@ -330,8 +330,7 @@ unsigned char *CNwnStdLoader::LoadResource (const char *pszName,
 			end = 3;
 		}
 		
-		// Currently no CPP suport for nwnee
-		if (m_bUseCPP && !m_bUseNWNEE)
+		if (m_bUseCPP) // && !m_bUseNWNEE)
 			start = 0;
 
 		for (d = start; d < end; d++ ) {

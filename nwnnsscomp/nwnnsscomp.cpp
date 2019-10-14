@@ -2144,7 +2144,7 @@ int main (int argc, char *argv [])
 		printf ("  -i - Path to include dir is following non-switch argument\n");
 		printf ("  -k - Enable CPP support - only meaningful with -i and using separate directory structure\n");	
 		printf ("  -l - List constant, struct and function symbols and running total\n");
-		printf ("  -n - Enable NWNEE support - only needed with -i. Currently CPP on EE is not supported");
+		printf ("  -n - Enable NWNEE support - only needed with -i");
 		printf ("  -o - Optimize the compiled source\n");
 		printf ("  -p - Path to NWNDir is following non-switch argument\n");
 		printf ("  -q - Silence most messages\n");
@@ -2161,7 +2161,7 @@ int main (int argc, char *argv [])
 		printf ("        extracted in the right order (so later ones overwrite earlier ones) or\n");
 		printf ("        it may contain a subdirectory for each set of scripts. These must be named\n");
 		printf ("        base_data  xp1_data  xp1patch_data  xp2_data  xp2patch_data  xp3_data\n");
-		printf ("        and xpcpp_data for CPP. For NWN:EE use base_scripts. \n");
+		printf ("        and xpcpp_data for non-ee CPP. For NWN:EE use base_scripts and eecpp_scripts. \n");
 		exit (0);
 	}
 
